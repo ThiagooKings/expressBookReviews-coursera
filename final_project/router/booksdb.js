@@ -7,8 +7,8 @@ let books = {
     author: "Unknown",
     title: "The Book Of Job",
     reviews: {
-      1: { rate: 10, comment: "Very nice book" },
-      2: { rate: 1, comment: "Very bad book" },
+      1: { rate: 10, comment: "Very nice book", reviewedByUser: "JWick" },
+      2: { rate: 1, comment: "Very bad book", reviewedByUser: "JSmith" },
     },
   },
   6: { author: "Unknown", title: "One Thousand and One Nights", reviews: {} },

@@ -6,15 +6,10 @@ let users = require("./usersdb.js");
 const regd_users = express.Router();
 
 const isValid = (username) => {
-  //returns boolean
-  //write code to check is the username is valid
   return !users.some((user) => user.username === username);
 };
 
 const authenticatedUser = (username, password) => {
-  //returns boolean
-  //write code to check if username and password match the one we have in records.
-
   return users.find(
     (user) => user.username === username && user.password === password
   );
@@ -35,7 +30,7 @@ regd_users.post("/login", (req, res) => {
   // Generate JWT access token
   let accessToken = jwt.sign(
     {
-      data: user,
+      data: user.username,
     },
     "access",
     { expiresIn: 60 * 60 }
@@ -51,8 +46,61 @@ regd_users.post("/login", (req, res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({ message: "Yet to be implemented" });
+  let isbn = req.params.isbn;
+
+  let rate = req.body.rate;
+  let comment = req.body.comment;
+  let username = jwt.decode(req.session.authorization.accessToken).data;
+
+  if (!books[isbn]) {
+    res.status(404).json({ message: "Book not found!" });
+  }
+
+  let lengthOfReview = Object.keys(books[isbn].reviews).length;
+
+  if (lengthOfReview !== 0) {
+    for (let i in books[isbn].reviews) {
+      if (books[isbn].reviews[i].reviewedByUser == username) {
+        books[isbn].reviews[i] = { rate, comment, reviewedByUser: username };
+
+        return res.status(200).send(JSON.stringify(books[isbn]));
+      }
+    }
+
+    books[isbn].reviews[lengthOfReview + 1] = {
+      rate,
+      comment,
+      reviewedByUser: username,
+    };
+
+    return res.status(201).send(JSON.stringify(books[isbn]));
+  }
+  books[isbn].reviews = { 1: { rate, comment, reviewedByUser: username } };
+
+  return res.status(201).send(JSON.stringify(books[isbn]));
+});
+
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  let isbn = req.params.isbn;
+  let username = jwt.decode(req.session.authorization.accessToken).data;
+
+  if (!books[isbn]) {
+    return res.status(404).json({ message: "Book not found!" });
+  }
+
+  let lengthOfReview = Object.keys(books[isbn].reviews).length;
+
+  if (lengthOfReview !== 0) {
+    for (let i in books[isbn].reviews) {
+      if (books[isbn].reviews[i].reviewedByUser == username) {
+        delete books[isbn].reviews[i];
+
+        return res.status(200).send(JSON.stringify(books[isbn]));
+      }
+    }
+  }
+
+  return res.status(404).json({ message: "Review not found!" });
 });
 
 module.exports.authenticated = regd_users;
